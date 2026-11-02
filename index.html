@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="My Gym">
+<title>My Gym Tracker</title>
+<style>
+  :root {
+    --pink: #D4537E;
+    --pink-light: #FBEAF0;
+    --pink-mid: #ED93B1;
+    --pink-dark: #72243E;
+    --teal: #1D9E75;
+    --teal-light: #E1F5EE;
+    --teal-mid: #5DCAA5;
+    --teal-dark: #085041;
+    --purple: #7F77DD;
+    --purple-light: #EEEDFE;
+    --purple-dark: #3C3489;
+    --bg: #F9F8F6;
+    --surface: #FFFFFF;
+    --text: #1A1A1A;
+    --text-muted: #6B6B6B;
+    --text-hint: #9E9E9E;
+    --border: rgba(0,0,0,0.1);
+    --border-strong: rgba(0,0,0,0.18);
+    --radius: 14px;
+    --radius-sm: 8px;
+    --radius-pill: 999px;
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #111110;
+      --surface: #1C1C1A;
+      --text: #F0EFE8;
+      --text-muted: #9E9D97;
+      --text-hint: #6B6A65;
+      --border: rgba(255,255,255,0.1);
+      --border-strong: rgba(255,255,255,0.18);
+      --pink-light: #2D1420;
+      --teal-light: #0C2820;
+      --purple-light: #1A1840;
+      --pink-dark: #ED93B1;
+      --teal-dark: #5DCAA5;
+      --purple-dark: #AFA9EC;
+    }
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; overscroll-behavior: none; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 16px;
+    line-height: 1.5;
+  }
+  .app {
+    max-width: 430px;
+    margin: 0 auto;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  .main {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px 16px 100px;
+    -webkit-overflow-scrolling: touch;
+  }
+  .tab-bar {
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    max-width: 430px;
+    background: var(--surface);
+    border-top: 0.5px solid var(--border);
+    display: flex;
+    padding-bottom: var(--safe-bottom);
+    z-index: 100;
+  }
+  .tab-btn {
+    flex: 1;
+    padding: 10px 4px 8px;
+    border: none;
+    background: transparent;
+    color: var(--text-hint);
+    font-size: 10px;
+    font-family: inherit;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    transition: color 0.15s;
+  }
+  .tab-btn svg { width: 24px; height: 24px; stroke-width: 1.5; }
+  .tab-btn.active { color: var(--pink); }
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  /* Typography */
+  .page-title { font-size: 28px; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 4px; }
+  .page-sub { font-size: 14px; color: var(--text-muted); margin-bottom: 20px; }
+  .section-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-hint);
+    margin: 20px 0 10px;
+  }
+
+  /* Cards */
+  .card {
+    background: var(--surface);
+    border-radius: var(--radius);
+    border: 0.5px solid var(--border);
+    padding: 16px;
+    margin-bottom: 12px;
+  }
+  .card-title { font-size: 16px; font-weight: 600; margin-bottom: 2px; }
+  .card-sub { font-size: 13px; color: var(--text-muted); }
+
+  /* Tags */
+  .tag { font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: var(--radius-pill); display: inline-block; }
+  .tag-pink { background: var(--pink-light); color: var(--pink-dark); }
+  .tag-teal { background: var(--teal-light); color: var(--teal-dark); }
+  .tag-purple { background: var(--purple-light); color: var(--purple-dark); }
+
+  /* Buttons */
+  .btn {
+    width: 100%;
+    padding: 14px;
+    border-radius: var(--radius);
+    border: none;
+    font-size: 15px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    transition: opacity 0.15s, transform 0.1s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  .btn:active { transform: scale(0.97); opacity: 0.85; }
+  .btn-pink { background: var(--pink); color: #fff; }
+  .btn-teal { background: var(--teal); color: #fff; }
+  .btn-purple { background: var(--purple); color: #fff; }
+  .btn-ghost { background: var(--bg); color: var(--text); border: 0.5px solid var(--border-strong); }
+  .btn-danger { background: #FCEBEB; color: #A32D2D; border: none; }
+  @media (prefers-color-scheme: dark) {
+    .btn-danger { background: #2D1010; color: #F09595; }
+  }
+  .btn-sm { padding: 10px 16px; font-size: 14px; border-radius: var(--radius-sm); width: auto; }
+
+  /* Start session row */
+  .day-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    background: var(--surface);
+    border-radius: var(--radius);
+    border: 0.5px solid var(--border);
+    margin-bottom: 10px;
+    cursor: pointer;
+    transition: opacity 0.15s;
+  }
+  .day-row:active { opacity: 0.7; }
+  .day-row-info { flex: 1; }
+  .day-row-name { font-size: 15px; font-weight: 600; margin-bottom: 2px; }
+  .day-row-meta { font-size: 13px; color: var(--text-muted); }
+  .day-row-arrow { color: var(--text-hint); font-size: 20px; }
+
+  /* Stats grid */
+  .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 4px; }
+  .stat-card { background: var(--surface); border-radius: var(--radius-sm); padding: 14px; border: 0.5px solid var(--border); }
+  .stat-n { font-size: 26px; font-weight: 700; letter-spacing: -0.5px; }
+  .stat-l { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+  /* Week dots */
+  .week-row { display: flex; gap: 6px; margin-bottom: 20px; }
+  .week-dot { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .week-dot-label { font-size: 10px; color: var(--text-hint); font-weight: 500; }
+  .week-dot-circle { width: 28px; height: 28px; border-radius: 50%; border: 1.5px solid var(--border); background: transparent; }
+  .week-dot.done .week-dot-circle { background: var(--teal-mid); border-color: var(--teal-mid); }
+  .week-dot.today .week-dot-label { color: var(--pink); font-weight: 700; }
+  .week-dot.today .week-dot-circle { border-color: var(--pink); }
+
+  /* Exercise items */
+  .ex-item {
+    padding: 14px 0;
+    border-bottom: 0.5px solid var(--border);
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .ex-item:last-child { border-bottom: none; }
+  .ex-info { flex: 1; }
+  .ex-name { font-size: 15px; font-weight: 600; margin-bottom: 2px; }
+  .ex-sets { font-size: 13px; color: var(--text-muted); }
+  .ex-tip { font-size: 12px; color: var(--text-hint); margin-top: 3px; font-style: italic; }
+  .ex-weight-row { margin-top: 8px; display: flex; align-items: center; gap: 8px; }
+  .ex-weight-label { font-size: 12px; color: var(--text-muted); }
+  .ex-weight-input {
+    width: 72px;
+    padding: 6px 8px;
+    border: 0.5px solid var(--border-strong);
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    text-align: center;
+    background: var(--bg);
+    color: var(--text);
+    font-family: inherit;
+  }
+  .check-circle {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 1.5px solid var(--border-strong);
+    background: transparent;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 2px;
+    transition: all 0.15s;
+  }
+  .check-circle.done { background: var(--teal-mid); border-color: var(--teal-mid); }
+  .check-circle svg { width: 18px; height: 18px; stroke: #fff; opacity: 0; transition: opacity 0.15s; }
+  .check-circle.done svg { opacity: 1; }
+
+  /* Progress bar */
+  .prog-wrap { margin-bottom: 16px; }
+  .prog-meta { display: flex; justify-content: space-between; font-size: 13px; color: var(--text-muted); margin-bottom: 6px; }
+  .prog-bg { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+  .prog-fill { height: 100%; border-radius: 3px; background: var(--teal-mid); transition: width 0.3s; }
+
+  /* Notes */
+  .notes-input {
+    width: 100%;
+    padding: 12px;
+    border: 0.5px solid var(--border-strong);
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    font-family: inherit;
+    background: var(--bg);
+    color: var(--text);
+    resize: none;
+    min-height: 80px;
+    margin-top: 8px;
+  }
+
+  /* History */
+  .hist-item { padding: 12px 0; border-bottom: 0.5px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+  .hist-item:last-child { border-bottom: none; }
+  .hist-name { font-size: 14px; font-weight: 600; margin-bottom: 2px; }
+  .hist-note { font-size: 12px; color: var(--text-muted); }
+  .hist-right { text-align: right; flex-shrink: 0; padding-left: 12px; }
+  .hist-date { font-size: 13px; color: var(--text-muted); }
+  .hist-done { font-size: 11px; margin-top: 2px; }
+
+  /* Split bars */
+  .split-row { margin-bottom: 14px; }
+  .split-meta { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 5px; }
+  .split-bg { height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; }
+  .split-fill { height: 100%; border-radius: 4px; transition: width 0.4s; }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    top: 16px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-80px);
+    background: var(--text);
+    color: var(--bg);
+    padding: 12px 20px;
+    border-radius: var(--radius-pill);
+    font-size: 14px;
+    font-weight: 500;
+    z-index: 999;
+    transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+    white-space: nowrap;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* Back button */
+  .back-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 15px;
+    color: var(--pink);
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+    padding: 0;
+    margin-bottom: 16px;
+    font-weight: 500;
+  }
+
+  /* Share URL box */
+  .url-box {
+    background: var(--bg);
+    border: 0.5px solid var(--border-strong);
+    border-radius: var(--radius-sm);
+    padding: 12px;
+    font-size: 12px;
+    font-family: monospace;
+    color: var(--text-muted);
+    word-break: break-all;
+    margin: 10px 0;
+    user-select: all;
+  }
+
+  /* Accent stripe */
+  .accent-stripe {
+    height: 4px;
+    border-radius: 2px;
+    margin-bottom: 16px;
+    background: linear-gradient(90deg, var(--pink) 0%, var(--purple) 50%, var(--teal) 100%);
+  }
+
+  .empty { text-align: center; padding: 32px 16px; color: var(--text-muted); font-size: 14px; }
+  .empty svg { width: 40px; height: 40px; stroke: var(--text-hint); margin-bottom: 10px; }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="main" id="main">
+
+    <!-- HOME -->
+    <div id="s-home" class="screen active">
+      <div class="accent-stripe"></div>
+      <div class="page-title">Hey! 💪</div>
+      <div class="page-sub">ClubLime workout tracker</div>
+
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-n" id="h-total">0</div><div class="stat-l">Sessions logged</div></div>
+        <div class="stat-card"><div class="stat-n" id="h-week">0</div><div class="stat-l">This week</div></div>
+      </div>
+
+      <div class="section-label">This week</div>
+      <div class="week-row" id="week-row"></div>
+
+      <div class="section-label">Start a session</div>
+      <div class="day-row" onclick="startSession('A')">
+        <div class="day-row-info">
+          <div class="day-row-name">Day A — Strength</div>
+          <div class="day-row-meta">Build muscle · 50 min · <span class="tag tag-purple" style="font-size:10px;padding:2px 8px;">Strength</span></div>
+        </div>
+        <div class="day-row-arrow">›</div>
+      </div>
+      <div class="day-row" onclick="startSession('B')">
+        <div class="day-row-info">
+          <div class="day-row-name">Day B — Cardio & HIIT</div>
+          <div class="day-row-meta">Burn fat · 45 min · <span class="tag tag-teal" style="font-size:10px;padding:2px 8px;">Cardio</span></div>
+        </div>
+        <div class="day-row-arrow">›</div>
+      </div>
+      <div class="day-row" onclick="startSession('C')">
+        <div class="day-row-info">
+          <div class="day-row-name">Day C — Tone & Core</div>
+          <div class="day-row-meta">Shape + burn · 50 min · <span class="tag tag-pink" style="font-size:10px;padding:2px 8px;">Tone</span></div>
+        </div>
+        <div class="day-row-arrow">›</div>
+      </div>
+
+      <div class="section-label">About this program</div>
+      <div class="card" style="font-size:13px;color:var(--text-muted);line-height:1.7;">
+        3 sessions per week · rest a day between each · rotate A → B → C. All exercises are beginner-friendly with no complex barbell movements. Focus on progressive overload — try to add a little weight each week.
+      </div>
+    </div>
+
+    <!-- SESSION -->
+    <div id="s-session" class="screen">
+      <button class="back-btn" onclick="go('home')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+        Back
+      </button>
+      <div class="page-title" id="sess-title">Session</div>
+      <div class="page-sub" id="sess-date"></div>
+
+      <div class="prog-wrap">
+        <div class="prog-meta"><span id="prog-label">0 of 0 done</span><span id="prog-pct">0%</span></div>
+        <div class="prog-bg"><div class="prog-fill" id="prog-fill" style="width:0%"></div></div>
+      </div>
+
+      <div class="card" id="ex-list"></div>
+
+      <div class="section-label">Session notes</div>
+      <textarea class="notes-input" id="sess-notes" placeholder="How did it feel? Any PRs? Energy today?"></textarea>
+
+      <div style="margin-top:16px;">
+        <button class="btn btn-pink" onclick="saveSession()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="18" height="18"><path d="M20 6L9 17l-5-5"/></svg>
+          Save session
+        </button>
+      </div>
+    </div>
+
+    <!-- PROGRESS -->
+    <div id="s-progress" class="screen">
+      <div class="accent-stripe"></div>
+      <div class="page-title">Progress</div>
+      <div class="page-sub" id="prog-sub">Keep showing up</div>
+
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-n" id="p-total">0</div><div class="stat-l">Total sessions</div></div>
+        <div class="stat-card"><div class="stat-n" id="p-streak">0</div><div class="stat-l">Week streak</div></div>
+      </div>
+
+      <div class="section-label">Split balance</div>
+      <div class="card">
+        <div class="split-row">
+          <div class="split-meta"><span>Day A — Strength</span><span id="pb-a" style="color:var(--text-muted);">0 sessions</span></div>
+          <div class="split-bg"><div class="split-fill" id="pbar-a" style="width:0%;background:var(--purple);"></div></div>
+        </div>
+        <div class="split-row">
+          <div class="split-meta"><span>Day B — Cardio</span><span id="pb-b" style="color:var(--text-muted);">0 sessions</span></div>
+          <div class="split-bg"><div class="split-fill" id="pbar-b" style="width:0%;background:var(--teal);"></div></div>
+        </div>
+        <div class="split-row" style="margin-bottom:0;">
+          <div class="split-meta"><span>Day C — Tone & Core</span><span id="pb-c" style="color:var(--text-muted);">0 sessions</span></div>
+          <div class="split-bg"><div class="split-fill" id="pbar-c" style="width:0%;background:var(--pink);"></div></div>
+        </div>
+      </div>
+
+      <div class="section-label">History</div>
+      <div class="card" id="history-card"></div>
+    </div>
+
+    <!-- SHARE -->
+    <div id="s-share" class="screen">
+      <div class="accent-stripe"></div>
+      <div class="page-title">Share & settings</div>
+      <div class="page-sub">Send this tracker to a friend</div>
+
+      <div class="section-label">Share this tracker</div>
+      <div class="card">
+        <div style="font-size:14px;font-weight:600;margin-bottom:6px;">Send to a friend</div>
+        <div style="font-size:13px;color:var(--text-muted);line-height:1.6;margin-bottom:10px;">Copy the link and send via iMessage, WhatsApp, or email. They open it in Safari and can add it to their home screen.</div>
+        <div class="url-box" id="share-url">Loading...</div>
+        <button class="btn btn-pink" onclick="copyLink()" style="margin-bottom:10px;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+          Copy link
+        </button>
+        <button class="btn btn-ghost" onclick="shareNative()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+          Share via iPhone
+        </button>
+      </div>
+
+      <div class="section-label">Add to home screen</div>
+      <div class="card" style="font-size:13px;color:var(--text-muted);line-height:1.7;">
+        In Safari, tap the <strong style="color:var(--text);">Share</strong> button at the bottom of your screen, then tap <strong style="color:var(--text);">"Add to Home Screen"</strong>. The tracker will appear as an app icon — no App Store needed.
+      </div>
+
+      <div class="section-label">Export data</div>
+      <div class="card">
+        <div style="font-size:13px;color:var(--text-muted);margin-bottom:12px;">Download all your sessions as a text file.</div>
+        <button class="btn btn-ghost" onclick="exportData()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Export sessions
+        </button>
+      </div>
+
+      <div class="section-label">Reset</div>
+      <div class="card">
+        <div style="font-size:13px;color:var(--text-muted);margin-bottom:12px;">Clear all session data and start fresh.</div>
+        <button class="btn btn-danger" onclick="resetData()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
+          Reset all data
+        </button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Tab bar -->
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="go('home')" id="tab-home">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      Home
+    </button>
+    <button class="tab-btn" onclick="go('session')" id="tab-session">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
+      Session
+    </button>
+    <button class="tab-btn" onclick="go('progress')" id="tab-progress">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+      Progress
+    </button>
+    <button class="tab-btn" onclick="go('share')" id="tab-share">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+      Share
+    </button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const EXERCISES = {
+  A:[
+    {n:"Goblet squat",d:"4 × 10–12 reps",tip:"Hold dumbbell at chest, squat deep, knees out"},
+    {n:"Leg press",d:"4 × 12–15 reps",tip:"Full range, don't lock out knees at the top"},
+    {n:"Hip thrust (barbell or machine)",d:"4 × 12–15 reps",tip:"Drive through heels, hard squeeze at the top"},
+    {n:"Chest press machine",d:"3 × 10–12 reps",tip:"Slow on the way back — 3 seconds down"},
+    {n:"Seated cable row",d:"3 × 10–12 reps",tip:"Pull elbows back, squeeze shoulder blades"},
+    {n:"Dumbbell shoulder press",d:"3 × 12 reps",tip:"Seated, controlled — don't arch your lower back"},
+    {n:"Plank",d:"3 × 30–40 seconds",tip:"Brace your core hard the whole time"},
+  ],
+  B:[
+    {n:"Treadmill warm-up",d:"5 min easy jog",tip:"Get to about 120bpm, loosen up"},
+    {n:"Treadmill intervals",d:"15 min · 45s fast / 45s walk",tip:"Push the fast intervals — you should be breathless"},
+    {n:"Rowing machine",d:"3 × 3 min, 1 min rest",tip:"Legs first, then lean back, then pull arms"},
+    {n:"Stairmaster",d:"10 min steady",tip:"No holding the rails — arms free, stay upright"},
+    {n:"Battle ropes",d:"4 × 30s max effort",tip:"30s on, 30s rest — go as hard as you can"},
+    {n:"Mountain climbers",d:"3 × 30 seconds",tip:"Core tight, hips level — don't let them rise"},
+    {n:"Bicycle crunches",d:"3 × 20 reps",tip:"Slow and deliberate — feel the twist"},
+  ],
+  C:[
+    {n:"Bulgarian split squat",d:"3 × 10 each leg",tip:"Rear foot on bench, stay tall, knee tracks over toes"},
+    {n:"Lat pulldown",d:"4 × 10–12 reps",tip:"Wide grip, lean back slightly, pull to upper chest"},
+    {n:"Cable glute kickback",d:"3 × 15 each leg",tip:"Squeeze hard at the top of each rep"},
+    {n:"Incline dumbbell press",d:"3 × 10–12 reps",tip:"20° incline, 3 seconds on the way down"},
+    {n:"Tricep rope pushdown",d:"3 × 12–15 reps",tip:"Elbows tucked, spread the rope at the bottom"},
+    {n:"Leg curl machine",d:"3 × 12–15 reps",tip:"Go slow on the way back down"},
+    {n:"Cable crunch",d:"3 × 15 reps",tip:"Round your spine fully, pause at the bottom"},
+  ]
+};
+const LABELS={A:"Day A — Strength",B:"Day B — Cardio & HIIT",C:"Day C — Tone & Core"};
+const COLORS={A:"var(--purple)",B:"var(--teal)",C:"var(--pink)"};
+let data={};
+try{data=JSON.parse(localStorage.getItem('gymtracker_v1')||'{}');}catch(e){}
+let currentDay='A';
+function save(){try{localStorage.setItem('gymtracker_v1',JSON.stringify(data));}catch(e){}}
+
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2000);
+}
+
+function go(screen){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('s-'+screen).classList.add('active');
+  document.getElementById('tab-'+screen).classList.add('active');
+  document.getElementById('main').scrollTop=0;
+  if(screen==='home')renderHome();
+  if(screen==='progress')renderProgress();
+  if(screen==='share')document.getElementById('share-url').textContent=window.location.href;
+  if(screen==='session'&&!document.getElementById('ex-list').children.length)startSession('A');
+}
+
+function startSession(day){
+  currentDay=day;
+  document.getElementById('sess-title').textContent=LABELS[day];
+  const d=new Date();
+  document.getElementById('sess-date').textContent=d.toLocaleDateString('en-AU',{weekday:'long',day:'numeric',month:'long'});
+  document.getElementById('sess-notes').value='';
+  renderExList();
+  go('session');
+}
+
+function renderExList(){
+  const exs=EXERCISES[currentDay];
+  let html='';
+  exs.forEach((ex,i)=>{
+    const showWeight=currentDay!=='B';
+    html+=`<div class="ex-item">
+      <div class="ex-info">
+        <div class="ex-name">${ex.n}</div>
+        <div class="ex-sets">${ex.d}</div>
+        <div class="ex-tip">${ex.tip}</div>
+        ${showWeight?`<div class="ex-weight-row"><span class="ex-weight-label">Weight (kg)</span><input type="number" class="ex-weight-input" id="w${i}" placeholder="—" min="0" step="0.5" inputmode="decimal"></div>`:''}
+      </div>
+      <button class="check-circle" id="cb${i}" onclick="toggleDone(${i})" aria-label="Mark done">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>
+      </button>
+    </div>`;
+  });
+  document.getElementById('ex-list').innerHTML=html;
+  updateProg();
+}
+
+function toggleDone(i){
+  document.getElementById('cb'+i).classList.toggle('done');
+  updateProg();
+}
+
+function updateProg(){
+  const exs=EXERCISES[currentDay];
+  const done=exs.filter((_,i)=>document.getElementById('cb'+i)?.classList.contains('done')).length;
+  const pct=Math.round(done/exs.length*100);
+  document.getElementById('prog-label').textContent=done+' of '+exs.length+' done';
+  document.getElementById('prog-pct').textContent=pct+'%';
+  document.getElementById('prog-fill').style.width=pct+'%';
+}
+
+function saveSession(){
+  const exs=EXERCISES[currentDay];
+  const logged=exs.map((ex,i)=>({
+    n:ex.n,
+    w:document.getElementById('w'+i)?document.getElementById('w'+i).value:'',
+    done:document.getElementById('cb'+i)?.classList.contains('done')||false
+  }));
+  const today=new Date().toISOString().slice(0,10);
+  const key=today+'-'+currentDay+'-'+Date.now();
+  data[key]={date:today,day:currentDay,notes:document.getElementById('sess-notes').value,exercises:logged};
+  save();
+  showToast('Session saved!');
+  go('home');
+}
+
+function renderHome(){
+  const sessions=Object.values(data);
+  document.getElementById('h-total').textContent=sessions.length;
+  const now=new Date();
+  const ws=new Date(now);ws.setDate(now.getDate()-now.getDay());ws.setHours(0,0,0,0);
+  const wk=sessions.filter(s=>new Date(s.date)>=ws).length;
+  document.getElementById('h-week').textContent=wk;
+  const days=['S','M','T','W','T','F','S'];
+  let html='';
+  for(let i=0;i<7;i++){
+    const d=new Date(ws);d.setDate(ws.getDate()+i);
+    const ds=d.toISOString().slice(0,10);
+    const isToday=ds===now.toISOString().slice(0,10);
+    const done=sessions.some(s=>s.date===ds);
+    html+=`<div class="week-dot ${done?'done':''} ${isToday?'today':''}"><div class="week-dot-label">${days[i]}</div><div class="week-dot-circle"></div></div>`;
+  }
+  document.getElementById('week-row').innerHTML=html;
+}
+
+function renderProgress(){
+  const sessions=Object.values(data);
+  document.getElementById('p-total').textContent=sessions.length;
+  const counts={A:0,B:0,C:0};
+  sessions.forEach(s=>{if(counts[s.day]!==undefined)counts[s.day]++;});
+  const max=Math.max(counts.A,counts.B,counts.C,1);
+  ['A','B','C'].forEach(d=>{
+    const k=d.toLowerCase();
+    document.getElementById('pb-'+k).textContent=counts[d]+' session'+(counts[d]===1?'':'s');
+    document.getElementById('pbar-'+k).style.width=Math.round(counts[d]/max*100)+'%';
+  });
+  const weeks={};
+  sessions.forEach(s=>{
+    const dd=new Date(s.date);
+    const yw=dd.getFullYear()+'-'+Math.ceil(((dd-new Date(dd.getFullYear(),0,1))/86400000+1)/7);
+    weeks[yw]=(weeks[yw]||0)+1;
+  });
+  let streak=0;
+  Object.keys(weeks).sort().reverse().forEach(w=>{if(weeks[w]>=2)streak++;});
+  document.getElementById('p-streak').textContent=streak;
+  const sub=sessions.length===0?'Keep showing up':sessions.length===1?'First session logged — great start!':''+sessions.length+' sessions and counting';
+  document.getElementById('prog-sub').textContent=sub;
+  const sorted=sessions.slice().sort((a,b)=>b.date.localeCompare(a.date));
+  if(sorted.length===0){
+    document.getElementById('history-card').innerHTML='<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><div>No sessions yet.<br>Start your first workout!</div></div>';
+    return;
+  }
+  const lbl={A:'Strength',B:'Cardio',C:'Tone & Core'};
+  let html='';
+  sorted.slice(0,15).forEach(s=>{
+    const done=(s.exercises||[]).filter(e=>e.done).length;
+    const total=(s.exercises||[]).length;
+    const allDone=done===total&&total>0;
+    html+=`<div class="hist-item">
+      <div><div class="hist-name">Day ${s.day} — ${lbl[s.day]}</div><div class="hist-note">${s.notes?s.notes.slice(0,50)+(s.notes.length>50?'…':''):'No notes'}</div></div>
+      <div class="hist-right"><div class="hist-date">${new Date(s.date).toLocaleDateString('en-AU',{day:'numeric',month:'short'})}</div><div class="hist-done" style="color:${allDone?'var(--teal)':'var(--text-hint)'};">${done}/${total}</div></div>
+    </div>`;
+  });
+  document.getElementById('history-card').innerHTML=html;
+}
+
+function copyLink(){
+  const url=window.location.href;
+  if(navigator.clipboard){navigator.clipboard.writeText(url).then(()=>showToast('Link copied!'));}
+  else{const ta=document.createElement('textarea');ta.value=url;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);showToast('Link copied!');}
+}
+
+function shareNative(){
+  if(navigator.share){
+    navigator.share({title:'My gym tracker',text:'My ClubLime workout tracker',url:window.location.href}).catch(()=>{});
+  } else { copyLink(); }
+}
+
+function exportData(){
+  const sessions=Object.values(data).sort((a,b)=>b.date.localeCompare(a.date));
+  if(sessions.length===0){showToast('No sessions to export');return;}
+  const lbl={A:'Day A — Strength',B:'Day B — Cardio',C:'Day C — Tone & Core'};
+  let txt='My Gym Sessions\nClubLime tracker\n\n';
+  sessions.forEach(s=>{
+    txt+=`${s.date}  ${lbl[s.day]}\n`;
+    if(s.notes)txt+=`Notes: ${s.notes}\n`;
+    (s.exercises||[]).forEach(e=>{txt+=`  ${e.done?'✓':'○'} ${e.n}${e.w?' — '+e.w+'kg':''}\n`;});
+    txt+='\n';
+  });
+  const blob=new Blob([txt],{type:'text/plain'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='gym-sessions.txt';a.click();
+}
+
+function resetData(){
+  if(confirm('Reset all your session data? This cannot be undone.')){
+    data={};save();showToast('Data cleared');renderHome();
+  }
+}
+
+renderHome();
+</script>
+</body>
+</html>
